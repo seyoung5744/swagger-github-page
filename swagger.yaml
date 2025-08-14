@@ -1,718 +1,629 @@
 ---
-swagger: "2.0"
+openapi: 3.0.1
 info:
-  description: "This is a sample server Petstore server.  You can find out more about\
-    \ Swagger at [http://swagger.io](http://swagger.io) or on [irc.freenode.net, #swagger](http://swagger.io/irc/).\
-    \  For this sample, you can use the api key `special-key` to test the authorization\
-    \ filters."
-  version: "1.0.5"
-  title: "Swagger Petstore"
-  termsOfService: "http://swagger.io/terms/"
-  contact:
-    email: "apiteam@swagger.io"
-  license:
-    name: "Apache 2.0"
-    url: "http://www.apache.org/licenses/LICENSE-2.0.html"
-host: "petstore.swagger.io"
-basePath: "/v2"
+  title: OpenAPI definition
+  version: v0
+servers:
+- url: http://localhost:8080
+  description: Generated server url
 tags:
-- name: "pet"
-  description: "Everything about your Pets"
-  externalDocs:
-    description: "Find out more"
-    url: "http://swagger.io"
-- name: "store"
-  description: "Access to Petstore orders"
-- name: "user"
-  description: "Operations about user"
-  externalDocs:
-    description: "Find out more about our store"
-    url: "http://swagger.io"
-schemes:
-- "https"
-- "http"
+- name: Schedule API
+  description: 일정 API
+- name: User API
+  description: 회원 API
+- name: Auth API
+  description: 인증 API
+- name: Comment API
+  description: 댓글 API
 paths:
-  /pet/{petId}/uploadImage:
-    post:
+  "/v1/schedules":
+    get:
       tags:
-      - "pet"
-      summary: "uploads an image"
-      description: ""
-      operationId: "uploadFile"
-      consumes:
-      - "multipart/form-data"
-      produces:
-      - "application/json"
+      - Schedule API
+      summary: 전체 일정 조회
+      description: 전체 일정을 조회합니다.
+      operationId: getAllSchedule
       parameters:
-      - name: "petId"
-        in: "path"
-        description: "ID of pet to update"
-        required: true
-        type: "integer"
-        format: "int64"
-      - name: "additionalMetadata"
-        in: "formData"
-        description: "Additional data to pass to server"
+      - name: page
+        in: query
         required: false
-        type: "string"
-      - name: "file"
-        in: "formData"
-        description: "file to upload"
+        schema:
+          type: integer
+          format: int32
+          default: 0
+      - name: size
+        in: query
         required: false
-        type: "file"
+        schema:
+          type: integer
+          format: int32
+          default: 10
       responses:
-        200:
-          description: "successful operation"
-          schema:
-            $ref: "#/definitions/ApiResponse"
-      security:
-      - petstore_auth:
-        - "write:pets"
-        - "read:pets"
-  /pet:
+        '200':
+          description: 전체 일정 조회 성공
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/ApiResponsePagingScheduleResponse"
     post:
       tags:
-      - "pet"
-      summary: "Add a new pet to the store"
-      description: ""
-      operationId: "addPet"
-      consumes:
-      - "application/json"
-      - "application/xml"
-      produces:
-      - "application/json"
-      - "application/xml"
+      - Schedule API
+      summary: 일정 생성
+      description: 새로운 일정을 등록합니다.
+      operationId: create
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/CreateScheduleRequest"
+        required: true
+      responses:
+        '201':
+          description: 일정 생성 성공
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/ApiResponseScheduleResponse"
+  "/v1/schedules/{scheduleId}/comments":
+    get:
+      tags:
+      - Comment API
+      summary: 댓글 목록 조회
+      description: 댓글 목록을 조회합니다.
+      operationId: getAllComments
       parameters:
-      - in: "body"
-        name: "body"
-        description: "Pet object that needs to be added to the store"
+      - name: scheduleId
+        in: path
         required: true
         schema:
-          $ref: "#/definitions/Pet"
+          type: integer
+          format: int64
       responses:
-        405:
-          description: "Invalid input"
-      security:
-      - petstore_auth:
-        - "write:pets"
-        - "read:pets"
-    put:
-      tags:
-      - "pet"
-      summary: "Update an existing pet"
-      description: ""
-      operationId: "updatePet"
-      consumes:
-      - "application/json"
-      - "application/xml"
-      produces:
-      - "application/json"
-      - "application/xml"
-      parameters:
-      - in: "body"
-        name: "body"
-        description: "Pet object that needs to be added to the store"
-        required: true
-        schema:
-          $ref: "#/definitions/Pet"
-      responses:
-        400:
-          description: "Invalid ID supplied"
-        404:
-          description: "Pet not found"
-        405:
-          description: "Validation exception"
-      security:
-      - petstore_auth:
-        - "write:pets"
-        - "read:pets"
-  /pet/findByStatus:
-    get:
-      tags:
-      - "pet"
-      summary: "Finds Pets by status"
-      description: "Multiple status values can be provided with comma separated strings"
-      operationId: "findPetsByStatus"
-      produces:
-      - "application/json"
-      - "application/xml"
-      parameters:
-      - name: "status"
-        in: "query"
-        description: "Status values that need to be considered for filter"
-        required: true
-        type: "array"
-        items:
-          type: "string"
-          enum:
-          - "available"
-          - "pending"
-          - "sold"
-          default: "available"
-        collectionFormat: "multi"
-      responses:
-        200:
-          description: "successful operation"
-          schema:
-            type: "array"
-            items:
-              $ref: "#/definitions/Pet"
-        400:
-          description: "Invalid status value"
-      security:
-      - petstore_auth:
-        - "write:pets"
-        - "read:pets"
-  /pet/findByTags:
-    get:
-      tags:
-      - "pet"
-      summary: "Finds Pets by tags"
-      description: "Multiple tags can be provided with comma separated strings. Use\
-        \ tag1, tag2, tag3 for testing."
-      operationId: "findPetsByTags"
-      produces:
-      - "application/json"
-      - "application/xml"
-      parameters:
-      - name: "tags"
-        in: "query"
-        description: "Tags to filter by"
-        required: true
-        type: "array"
-        items:
-          type: "string"
-        collectionFormat: "multi"
-      responses:
-        200:
-          description: "successful operation"
-          schema:
-            type: "array"
-            items:
-              $ref: "#/definitions/Pet"
-        400:
-          description: "Invalid tag value"
-      security:
-      - petstore_auth:
-        - "write:pets"
-        - "read:pets"
-      deprecated: true
-  /pet/{petId}:
-    get:
-      tags:
-      - "pet"
-      summary: "Find pet by ID"
-      description: "Returns a single pet"
-      operationId: "getPetById"
-      produces:
-      - "application/json"
-      - "application/xml"
-      parameters:
-      - name: "petId"
-        in: "path"
-        description: "ID of pet to return"
-        required: true
-        type: "integer"
-        format: "int64"
-      responses:
-        200:
-          description: "successful operation"
-          schema:
-            $ref: "#/definitions/Pet"
-        400:
-          description: "Invalid ID supplied"
-        404:
-          description: "Pet not found"
-      security:
-      - api_key: []
+        '200':
+          description: 댓글 목록 조회 성공
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/ApiResponseCommentListResponse"
     post:
       tags:
-      - "pet"
-      summary: "Updates a pet in the store with form data"
-      description: ""
-      operationId: "updatePetWithForm"
-      consumes:
-      - "application/x-www-form-urlencoded"
-      produces:
-      - "application/json"
-      - "application/xml"
+      - Comment API
+      summary: 댓글 생성
+      description: 일정에 댓글을 생성합니다.
+      operationId: addComment
       parameters:
-      - name: "petId"
-        in: "path"
-        description: "ID of pet that needs to be updated"
+      - name: scheduleId
+        in: path
         required: true
-        type: "integer"
-        format: "int64"
-      - name: "name"
-        in: "formData"
-        description: "Updated name of the pet"
-        required: false
-        type: "string"
-      - name: "status"
-        in: "formData"
-        description: "Updated status of the pet"
-        required: false
-        type: "string"
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/CreateCommentRequest"
+        required: true
       responses:
-        405:
-          description: "Invalid input"
-      security:
-      - petstore_auth:
-        - "write:pets"
-        - "read:pets"
+        '201':
+          description: 댓글 생성 성공
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/ApiResponseCommentResponse"
+  "/v1/auth/sign-up":
+    post:
+      tags:
+      - Auth API
+      summary: 회원가입
+      description: 회원 가입 절차에 따라 유저를 생성합니다
+      operationId: signUp
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/SignUpRequest"
+        required: true
+      responses:
+        '201':
+          description: 회원가입 성공
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/ApiResponseAuthInfoResponse"
+  "/v1/auth/login":
+    post:
+      tags:
+      - Auth API
+      summary: 로그인
+      description: 로그인을 시도합니다.
+      operationId: login
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/LoginRequest"
+        required: true
+      responses:
+        '200':
+          description: 로그인 성공
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/ApiResponseAuthInfoResponse"
+  "/v1/users/{id}":
+    get:
+      tags:
+      - User API
+      summary: 회원 정보 조회
+      description: 회원 정보를 조회합니다.
+      operationId: getUserInfo
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        '200':
+          description: 회원 정보 조회 성공
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/ApiResponseUserInfoResponse"
     delete:
       tags:
-      - "pet"
-      summary: "Deletes a pet"
-      description: ""
-      operationId: "deletePet"
-      produces:
-      - "application/json"
-      - "application/xml"
+      - User API
+      summary: 회원 삭제
+      description: 회원을 삭제합니다.
+      operationId: deleteUser
       parameters:
-      - name: "api_key"
-        in: "header"
-        required: false
-        type: "string"
-      - name: "petId"
-        in: "path"
-        description: "Pet id to delete"
-        required: true
-        type: "integer"
-        format: "int64"
-      responses:
-        400:
-          description: "Invalid ID supplied"
-        404:
-          description: "Pet not found"
-      security:
-      - petstore_auth:
-        - "write:pets"
-        - "read:pets"
-  /store/order:
-    post:
-      tags:
-      - "store"
-      summary: "Place an order for a pet"
-      description: ""
-      operationId: "placeOrder"
-      consumes:
-      - "application/json"
-      produces:
-      - "application/json"
-      - "application/xml"
-      parameters:
-      - in: "body"
-        name: "body"
-        description: "order placed for purchasing the pet"
+      - name: id
+        in: path
         required: true
         schema:
-          $ref: "#/definitions/Order"
+          type: integer
+          format: int64
       responses:
-        200:
-          description: "successful operation"
-          schema:
-            $ref: "#/definitions/Order"
-        400:
-          description: "Invalid Order"
-  /store/order/{orderId}:
+        '204':
+          description: 회원 삭제 성공 (No Content)
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/ApiResponseVoid"
+    patch:
+      tags:
+      - User API
+      summary: 회원 정보 수정
+      description: 회원 정보를 수정합니다.
+      operationId: editUserInfo
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/UpdateUserInfoRequest"
+        required: true
+      responses:
+        '200':
+          description: 회원 정보 수정 성공
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/ApiResponseUserInfoResponse"
+  "/v1/schedules/{scheduleId}/comments/{id}":
     get:
       tags:
-      - "store"
-      summary: "Find purchase order by ID"
-      description: "For valid response try integer IDs with value >= 1 and <= 10.\
-        \ Other values will generated exceptions"
-      operationId: "getOrderById"
-      produces:
-      - "application/json"
-      - "application/xml"
+      - Comment API
+      summary: 댓글 단건 조회
+      description: 댓글 단건을 조회합니다.
+      operationId: getComment
       parameters:
-      - name: "orderId"
-        in: "path"
-        description: "ID of pet that needs to be fetched"
+      - name: scheduleId
+        in: path
         required: true
-        type: "integer"
-        maximum: 10
-        minimum: 1
-        format: "int64"
+        schema:
+          type: integer
+          format: int64
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
       responses:
-        200:
-          description: "successful operation"
-          schema:
-            $ref: "#/definitions/Order"
-        400:
-          description: "Invalid ID supplied"
-        404:
-          description: "Order not found"
+        '200':
+          description: 댓글 단건 조회 성공
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/ApiResponseCommentResponse"
     delete:
       tags:
-      - "store"
-      summary: "Delete purchase order by ID"
-      description: "For valid response try integer IDs with positive integer value.\
-        \ Negative or non-integer values will generate API errors"
-      operationId: "deleteOrder"
-      produces:
-      - "application/json"
-      - "application/xml"
+      - Comment API
+      summary: 댓글 삭제
+      description: 댓글을 삭제합니다.
+      operationId: deleteComment
       parameters:
-      - name: "orderId"
-        in: "path"
-        description: "ID of the order that needs to be deleted"
-        required: true
-        type: "integer"
-        minimum: 1
-        format: "int64"
-      responses:
-        400:
-          description: "Invalid ID supplied"
-        404:
-          description: "Order not found"
-  /store/inventory:
-    get:
-      tags:
-      - "store"
-      summary: "Returns pet inventories by status"
-      description: "Returns a map of status codes to quantities"
-      operationId: "getInventory"
-      produces:
-      - "application/json"
-      parameters: []
-      responses:
-        200:
-          description: "successful operation"
-          schema:
-            type: "object"
-            additionalProperties:
-              type: "integer"
-              format: "int32"
-      security:
-      - api_key: []
-  /user/createWithArray:
-    post:
-      tags:
-      - "user"
-      summary: "Creates list of users with given input array"
-      description: ""
-      operationId: "createUsersWithArrayInput"
-      consumes:
-      - "application/json"
-      produces:
-      - "application/json"
-      - "application/xml"
-      parameters:
-      - in: "body"
-        name: "body"
-        description: "List of user object"
+      - name: scheduleId
+        in: path
         required: true
         schema:
-          type: "array"
+          type: integer
+          format: int64
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        '200':
+          description: 댓글 삭제 성공 (No Content)
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/ApiResponseVoid"
+    patch:
+      tags:
+      - Comment API
+      summary: 댓글 수정
+      description: 댓글을 수정합니다.
+      operationId: editComment
+      parameters:
+      - name: scheduleId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/EditCommentRequest"
+        required: true
+      responses:
+        '200':
+          description: 댓글 수정 성공
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/ApiResponseCommentResponse"
+  "/v1/schedules/{id}":
+    get:
+      tags:
+      - Schedule API
+      summary: 특정 일정 조회
+      description: ID에 해당하는 일정을 조회합니다.
+      operationId: getSchedule
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        '200':
+          description: 일정 조회 성공
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/ApiResponseScheduleResponse"
+    delete:
+      tags:
+      - Schedule API
+      summary: 일정 삭제
+      description: ID에 해당하는 일정을 삭제합니다.
+      operationId: deleteSchedule
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        '204':
+          description: 일정 삭제 성공 (No Content)
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/ApiResponseVoid"
+    patch:
+      tags:
+      - Schedule API
+      summary: 일정 수정
+      description: ID에 해당하는 일정의 제목, 내용을 수정합니다.
+      operationId: editScheduleTitleAndContents
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/EditScheduleTitleAndContentsRequest"
+        required: true
+      responses:
+        '200':
+          description: 일정 수정 성공
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/ApiResponseScheduleResponse"
+  "/v1/users":
+    get:
+      tags:
+      - User API
+      summary: 회원 목록 조회
+      description: 회원 목록을 조회합니다.
+      operationId: getAllUsers
+      responses:
+        '200':
+          description: 회원 목록 조회 성공
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/ApiResponseListUserInfoResponse"
+components:
+  schemas:
+    CreateScheduleRequest:
+      required:
+      - contents
+      - title
+      type: object
+      properties:
+        title:
+          maxLength: 100
+          minLength: 2
+          type: string
+        contents:
+          maxLength: 1000
+          minLength: 5
+          type: string
+    ApiResponseScheduleResponse:
+      type: object
+      properties:
+        data:
+          "$ref": "#/components/schemas/ScheduleResponse"
+    ScheduleResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        writer:
+          "$ref": "#/components/schemas/WriterResponse"
+        title:
+          type: string
+        contents:
+          type: string
+        commentCount:
+          type: integer
+          format: int32
+        createdAt:
+          type: string
+          format: date-time
+        modifiedAt:
+          type: string
+          format: date-time
+    WriterResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+    CreateCommentRequest:
+      required:
+      - contents
+      type: object
+      properties:
+        contents:
+          maxLength: 100
+          minLength: 1
+          type: string
+    ApiResponseCommentResponse:
+      type: object
+      properties:
+        data:
+          "$ref": "#/components/schemas/CommentResponse"
+    CommentResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        contents:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        modifiedAt:
+          type: string
+          format: date-time
+        writer:
+          "$ref": "#/components/schemas/WriterResponse"
+        schedule:
+          "$ref": "#/components/schemas/ScheduleResponse"
+    SignUpRequest:
+      required:
+      - email
+      - name
+      - password
+      type: object
+      properties:
+        name:
+          maxLength: 2147483647
+          minLength: 2
+          type: string
+        email:
+          type: string
+        password:
+          maxLength: 20
+          minLength: 8
+          pattern: "^(?=.*[A-Za-z])(?=.*\\d)(?=.*[!@#$%^&*()_+=\\-]).+$"
+          type: string
+    ApiResponseAuthInfoResponse:
+      type: object
+      properties:
+        data:
+          "$ref": "#/components/schemas/AuthInfoResponse"
+    AuthInfoResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        email:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        modifiedAt:
+          type: string
+          format: date-time
+    LoginRequest:
+      required:
+      - email
+      - password
+      type: object
+      properties:
+        email:
+          type: string
+        password:
+          maxLength: 20
+          minLength: 8
+          pattern: "^(?=.*[A-Za-z])(?=.*\\d)(?=.*[!@#$%^&*()_+=\\-]).+$"
+          type: string
+    UpdateUserInfoRequest:
+      required:
+      - email
+      - name
+      type: object
+      properties:
+        name:
+          maxLength: 2147483647
+          minLength: 2
+          type: string
+        email:
+          type: string
+    ApiResponseUserInfoResponse:
+      type: object
+      properties:
+        data:
+          "$ref": "#/components/schemas/UserInfoResponse"
+    UserInfoResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        email:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        modifiedAt:
+          type: string
+          format: date-time
+    EditCommentRequest:
+      required:
+      - contents
+      type: object
+      properties:
+        contents:
+          maxLength: 100
+          minLength: 1
+          type: string
+    EditScheduleTitleAndContentsRequest:
+      required:
+      - contents
+      - title
+      type: object
+      properties:
+        title:
+          maxLength: 100
+          minLength: 2
+          type: string
+        contents:
+          maxLength: 1000
+          minLength: 5
+          type: string
+    ApiResponseListUserInfoResponse:
+      type: object
+      properties:
+        data:
+          type: array
           items:
-            $ref: "#/definitions/User"
-      responses:
-        default:
-          description: "successful operation"
-  /user/createWithList:
-    post:
-      tags:
-      - "user"
-      summary: "Creates list of users with given input array"
-      description: ""
-      operationId: "createUsersWithListInput"
-      consumes:
-      - "application/json"
-      produces:
-      - "application/json"
-      - "application/xml"
-      parameters:
-      - in: "body"
-        name: "body"
-        description: "List of user object"
-        required: true
-        schema:
-          type: "array"
+            "$ref": "#/components/schemas/UserInfoResponse"
+    ApiResponsePagingScheduleResponse:
+      type: object
+      properties:
+        data:
+          "$ref": "#/components/schemas/PagingScheduleResponse"
+    PagingScheduleResponse:
+      type: object
+      properties:
+        pageNumber:
+          type: integer
+          format: int32
+        pageSize:
+          type: integer
+          format: int32
+        pageElements:
+          type: integer
+          format: int32
+        totalPages:
+          type: integer
+          format: int32
+        totalElements:
+          type: integer
+          format: int64
+        schedules:
+          type: array
           items:
-            $ref: "#/definitions/User"
-      responses:
-        default:
-          description: "successful operation"
-  /user/{username}:
-    get:
-      tags:
-      - "user"
-      summary: "Get user by user name"
-      description: ""
-      operationId: "getUserByName"
-      produces:
-      - "application/json"
-      - "application/xml"
-      parameters:
-      - name: "username"
-        in: "path"
-        description: "The name that needs to be fetched. Use user1 for testing. "
-        required: true
-        type: "string"
-      responses:
-        200:
-          description: "successful operation"
-          schema:
-            $ref: "#/definitions/User"
-        400:
-          description: "Invalid username supplied"
-        404:
-          description: "User not found"
-    put:
-      tags:
-      - "user"
-      summary: "Updated user"
-      description: "This can only be done by the logged in user."
-      operationId: "updateUser"
-      consumes:
-      - "application/json"
-      produces:
-      - "application/json"
-      - "application/xml"
-      parameters:
-      - name: "username"
-        in: "path"
-        description: "name that need to be updated"
-        required: true
-        type: "string"
-      - in: "body"
-        name: "body"
-        description: "Updated user object"
-        required: true
-        schema:
-          $ref: "#/definitions/User"
-      responses:
-        400:
-          description: "Invalid user supplied"
-        404:
-          description: "User not found"
-    delete:
-      tags:
-      - "user"
-      summary: "Delete user"
-      description: "This can only be done by the logged in user."
-      operationId: "deleteUser"
-      produces:
-      - "application/json"
-      - "application/xml"
-      parameters:
-      - name: "username"
-        in: "path"
-        description: "The name that needs to be deleted"
-        required: true
-        type: "string"
-      responses:
-        400:
-          description: "Invalid username supplied"
-        404:
-          description: "User not found"
-  /user/login:
-    get:
-      tags:
-      - "user"
-      summary: "Logs user into the system"
-      description: ""
-      operationId: "loginUser"
-      produces:
-      - "application/json"
-      - "application/xml"
-      parameters:
-      - name: "username"
-        in: "query"
-        description: "The user name for login"
-        required: true
-        type: "string"
-      - name: "password"
-        in: "query"
-        description: "The password for login in clear text"
-        required: true
-        type: "string"
-      responses:
-        200:
-          description: "successful operation"
-          headers:
-            X-Expires-After:
-              type: "string"
-              format: "date-time"
-              description: "date in UTC when token expires"
-            X-Rate-Limit:
-              type: "integer"
-              format: "int32"
-              description: "calls per hour allowed by the user"
-          schema:
-            type: "string"
-        400:
-          description: "Invalid username/password supplied"
-  /user/logout:
-    get:
-      tags:
-      - "user"
-      summary: "Logs out current logged in user session"
-      description: ""
-      operationId: "logoutUser"
-      produces:
-      - "application/json"
-      - "application/xml"
-      parameters: []
-      responses:
-        default:
-          description: "successful operation"
-  /user:
-    post:
-      tags:
-      - "user"
-      summary: "Create user"
-      description: "This can only be done by the logged in user."
-      operationId: "createUser"
-      consumes:
-      - "application/json"
-      produces:
-      - "application/json"
-      - "application/xml"
-      parameters:
-      - in: "body"
-        name: "body"
-        description: "Created user object"
-        required: true
-        schema:
-          $ref: "#/definitions/User"
-      responses:
-        default:
-          description: "successful operation"
-securityDefinitions:
-  api_key:
-    type: "apiKey"
-    name: "api_key"
-    in: "header"
-  petstore_auth:
-    type: "oauth2"
-    authorizationUrl: "https://petstore.swagger.io/oauth/authorize"
-    flow: "implicit"
-    scopes:
-      read:pets: "read your pets"
-      write:pets: "modify pets in your account"
-definitions:
-  ApiResponse:
-    type: "object"
-    properties:
-      code:
-        type: "integer"
-        format: "int32"
-      type:
-        type: "string"
-      message:
-        type: "string"
-  Category:
-    type: "object"
-    properties:
-      id:
-        type: "integer"
-        format: "int64"
-      name:
-        type: "string"
-    xml:
-      name: "Category"
-  Pet:
-    type: "object"
-    required:
-    - "name"
-    - "photoUrls"
-    properties:
-      id:
-        type: "integer"
-        format: "int64"
-      category:
-        $ref: "#/definitions/Category"
-      name:
-        type: "string"
-        example: "doggie"
-      photoUrls:
-        type: "array"
-        xml:
-          wrapped: true
-        items:
-          type: "string"
-          xml:
-            name: "photoUrl"
-      tags:
-        type: "array"
-        xml:
-          wrapped: true
-        items:
-          xml:
-            name: "tag"
-          $ref: "#/definitions/Tag"
-      status:
-        type: "string"
-        description: "pet status in the store"
-        enum:
-        - "available"
-        - "pending"
-        - "sold"
-    xml:
-      name: "Pet"
-  Tag:
-    type: "object"
-    properties:
-      id:
-        type: "integer"
-        format: "int64"
-      name:
-        type: "string"
-    xml:
-      name: "Tag"
-  Order:
-    type: "object"
-    properties:
-      id:
-        type: "integer"
-        format: "int64"
-      petId:
-        type: "integer"
-        format: "int64"
-      quantity:
-        type: "integer"
-        format: "int32"
-      shipDate:
-        type: "string"
-        format: "date-time"
-      status:
-        type: "string"
-        description: "Order Status"
-        enum:
-        - "placed"
-        - "approved"
-        - "delivered"
-      complete:
-        type: "boolean"
-    xml:
-      name: "Order"
-  User:
-    type: "object"
-    properties:
-      id:
-        type: "integer"
-        format: "int64"
-      username:
-        type: "string"
-      firstName:
-        type: "string"
-      lastName:
-        type: "string"
-      email:
-        type: "string"
-      password:
-        type: "string"
-      phone:
-        type: "string"
-      userStatus:
-        type: "integer"
-        format: "int32"
-        description: "User Status"
-    xml:
-      name: "User"
-externalDocs:
-  description: "Find out more about Swagger"
-  url: "http://swagger.io"
+            "$ref": "#/components/schemas/ScheduleResponse"
+    ApiResponseCommentListResponse:
+      type: object
+      properties:
+        data:
+          "$ref": "#/components/schemas/CommentListResponse"
+    CommentListResponse:
+      type: object
+      properties:
+        schedule:
+          "$ref": "#/components/schemas/ScheduleResponse"
+        comments:
+          type: array
+          items:
+            "$ref": "#/components/schemas/CommentResponse"
+    ApiResponseVoid:
+      type: object
+      properties:
+        data:
+          type: object
